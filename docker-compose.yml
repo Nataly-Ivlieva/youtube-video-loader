@@ -1,0 +1,18 @@
+services:
+
+  app:
+    build: .
+    container_name: video-loader
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - .:/app
+
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /app/database/database.sqlite
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
