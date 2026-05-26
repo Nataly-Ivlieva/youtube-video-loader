@@ -16,3 +16,9 @@ services:
       DB_CONNECTION: sqlite
       DB_DATABASE: /app/database/database.sqlite
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+
+  camunda:
+    image: camunda/camunda-bpm-platform:latest
+    
+    ports:
+    - "8080:8080"

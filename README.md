@@ -40,8 +40,6 @@ The application searches YouTube videos by predefined keywords in multiple langu
 
 # API Architecture Diagram
 
-_Insert API architecture diagram here_
-
 ![API Diagram](docs/images/api-diagram.png)
 
 ---
@@ -396,6 +394,35 @@ Covered functionality:
 - Retry mechanism for failed imports
 
 ---
+
+### AI-Powered Multilingual Accessibility
+
+The current system already stores video language metadata and can be extended with AI-based processing capabilities.
+
+Possible future enhancements include:
+
+- Automatic translation of video subtitles into multiple languages using AI models.
+- AI-generated voice dubbing for translated content.
+- Real-time subtitle generation for videos without captions.
+- Support for multilingual accessibility, enabling users to consume content regardless of the original language.
+
+### Accessibility for People with Disabilities
+
+The platform can be further extended to improve content accessibility:
+
+#### Hearing Impairments
+
+- Automatic subtitle generation.
+- Translation of subtitles into multiple languages.
+- Improved subtitle quality using speech recognition and AI correction.
+
+#### Visual Impairments
+
+- AI-generated audio descriptions of visual content.
+- Voice narration explaining objects, actions, charts, and scene changes.
+- Enhanced audio accessibility for educational and informational videos.
+
+These improvements would help make online video content more accessible and inclusive for a broader audience.
 
 # Author
 
