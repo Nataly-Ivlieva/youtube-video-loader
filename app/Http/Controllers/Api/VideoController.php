@@ -6,11 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Video;
 use Illuminate\Http\Request;
 use App\Http\Resources\VideoResource;
-use Illuminate\Support\Facades\DB;
-
+use App\Services\VideoImportService;
+use App\Services\KeywordService;
 
 class VideoController extends Controller
-{   /**
+{   
+    public function __construct(
+        private VideoImportService $importService
+    ) {
+    }
+
+    /**
      * Get paginated list of videos.
      *
      * Supports filtering by language and keyword,
