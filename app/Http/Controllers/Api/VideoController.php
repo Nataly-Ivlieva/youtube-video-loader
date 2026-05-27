@@ -7,7 +7,6 @@ use App\Models\Video;
 use Illuminate\Http\Request;
 use App\Http\Resources\VideoResource;
 use App\Services\VideoImportService;
-use App\Services\KeywordService;
 
 class VideoController extends Controller
 {   
