@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\YoutubeQuotaExceededException;
 use App\Models\Video;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -11,13 +12,14 @@ class VideoImportService
     private const MAX_PAGES_DAILY = 2;
     private const MAX_PAGES_HISTORY = 10;
 
+    private bool $quotaExceeded = false;
+
     public function __construct(
         private YoutubeService $youtube,
         private KeywordService $keywords
     ) {
     }
 
-    
     public function importYesterday(): void
     {
         $from = now()
@@ -28,15 +30,18 @@ class VideoImportService
             ->subDay()
             ->endOfDay();
 
-        Log::info('Import yesterday started', [
+        Log::info('Daily import started', [
             'from' => $from->toIso8601String(),
             'to' => $to->toIso8601String(),
         ]);
+
         $this->importPeriod(
             $from,
             $to,
             self::MAX_PAGES_DAILY
         );
+
+        Log::info('Daily import finished');
     }
 
     public function importHistoryDay(): void
@@ -48,6 +53,10 @@ class VideoImportService
         foreach ($keywords as $language => $words) {
 
             foreach ($words as $word) {
+
+                if ($this->quotaExceeded) {
+                    break 2;
+                }
 
                 $this->importHistoryKeyword(
                     $word,
@@ -69,9 +78,17 @@ class VideoImportService
             ->where('language', $language)
             ->min('published_at');
 
-        $to = $oldestDate
-            ? Carbon::parse($oldestDate)
-            : now()->subDay();
+        if ($oldestDate) {
+
+            $to = Carbon::parse($oldestDate)
+                ->subSecond();
+
+        } else {
+
+            $to = now()
+                ->subDay()
+                ->endOfDay();
+        }
 
         $from = $to
             ->copy()
@@ -98,15 +115,17 @@ class VideoImportService
         Carbon $to,
         int $maxPages
     ): void {
-        Log::info('YouTube import started', [
-            'published_after' => $from->toIso8601String(),
-            'published_before' => $to->toIso8601String(),
-        ]);
 
         $keywords = $this->keywords->all();
 
         foreach ($keywords as $language => $words) {
+
             foreach ($words as $word) {
+
+                if ($this->quotaExceeded) {
+                    break 2;
+                }
+
                 $this->importKeyword(
                     $word,
                     $language,
@@ -116,8 +135,6 @@ class VideoImportService
                 );
             }
         }
-
-        Log::info('YouTube import finished');
     }
 
     private function importKeyword(
@@ -127,13 +144,18 @@ class VideoImportService
         Carbon $to,
         int $maxPages
     ): void {
+
+        if ($this->quotaExceeded) {
+            return;
+        }
+
         Log::info('Processing keyword', [
             'keyword' => $word,
             'language' => $language,
         ]);
 
-        $pageToken = null;
         $page = 0;
+        $pageToken = null;
         $totalNewVideos = 0;
 
         try {
@@ -144,6 +166,7 @@ class VideoImportService
 
                 Log::info('Loading page', [
                     'keyword' => $word,
+                    'language' => $language,
                     'page' => $page,
                 ]);
 
@@ -184,6 +207,15 @@ class VideoImportService
                 'new_videos' => $totalNewVideos,
             ]);
 
+        } catch (YoutubeQuotaExceededException $e) {
+
+            $this->quotaExceeded = true;
+
+            Log::warning('YouTube quota exceeded. Import stopped.', [
+                'keyword' => $word,
+                'language' => $language,
+            ]);
+
         } catch (\Throwable $e) {
 
             Log::error('Import failed', [
@@ -199,6 +231,7 @@ class VideoImportService
         string $keyword,
         string $language
     ): int {
+
         $newVideos = 0;
 
         foreach ($result['items'] ?? [] as $item) {
@@ -239,6 +272,7 @@ class VideoImportService
         string $keyword,
         string $language
     ): array {
+
         $videoId = $item['id']['videoId'];
 
         return [
